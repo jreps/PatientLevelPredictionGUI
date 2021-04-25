@@ -20,6 +20,7 @@ library(shiny)
 library(plotly)
 library(shinycssloaders)
 library(shinydashboard)
+library(shinyWidgets)
 library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory-input')
 
 ##appdir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")

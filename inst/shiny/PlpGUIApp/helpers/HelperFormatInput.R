@@ -94,10 +94,29 @@ createPackage <- function(jsonForStudy,
   }
 }
 
+
+# format strToVect
+
+strToVect <- function(x, sepVal=','){
+  if(class(x)=="character"){
+    if(length(grep(sepVal,x))>0){
+      x <- as.double(strsplit(x, sepVal)[[1]])
+      print('modified:')
+      print(x)
+      return(x)
+    }
+  }
+
+  return(x)
+}
+
 # works correctly!
 formatModelList <- function(mList){
   names <- unlist(lapply(mList, function(x) x$name))
   settings <- lapply(mList, function(x) x$settings)
+  for(i in 1:length(settings)){
+    settings[[i]] <- lapply(settings[[i]], strToVect)
+  }
   names <- paste0(names,'Settings')
 
   result <- list()
@@ -161,13 +180,31 @@ modifySettings <- function(listV){
     names(settings) <- gsub('cohortCov', '', names(settings))
   }
   if(fnct =='Standard'){
+    if(settings$includedCovariateIds == ''){
+      settings$includedCovariateIds <- c()
+    } else{
+      settings$includedCovariateIds <- c(strToVect(settings$includedCovariateIds))
+    }
+    if(settings$excludedCovariateConceptIds == ''){
+      settings$excludedCovariateConceptIds <- c()
+    } else{
+      settings$excludedCovariateConceptIds <- c(strToVect(settings$excludedCovariateConceptIds))
+    }
+    if(settings$includedCovariateConceptIds == ''){
+      settings$includedCovariateConceptIds <- c()
+    } else{
+      settings$includedCovariateConceptIds <- c(strToVect(settings$includedCovariateConceptIds))
+    }
     settings <- do.call(FeatureExtraction::createCovariateSettings, settings)
   }
   if(fnct == 'Age'){
     names(settings) <- gsub('ageCov', '', names(settings))
   }
   if(fnct == 'Measurement'){
-    names(settings) <- gsub('measurementCov', '', names(settings))
+    names(settings) <- gsub('measureCov', '', names(settings))
+    if(!is.null(settings$conceptSet)){
+      settings$conceptSet <- strToVect(settings$conceptSet)
+    }
   }
   if(fnct == 'MeasurementCohort'){
     names(settings) <- gsub('measurementCohortCov', '', names(settings))

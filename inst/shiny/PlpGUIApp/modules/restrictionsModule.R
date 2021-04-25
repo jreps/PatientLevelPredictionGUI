@@ -24,11 +24,11 @@ restrictionServer <- #function(id) {
 
     shiny::observeEvent(input$restrictionAddViewer, {
         #open editor module:
-      if(!is.null(options1Names) && !is.null(options2Names)){
-        choices1 <- as.list(options1Vals)
-        names(choices1) <- options1Names
-        choices2 <- as.list(options2Vals)
-        names(choices2) <- options2Names
+      if(!is.null(options1Names()) && !is.null(options2Names())){
+        choices1 <- as.list(options1Vals())
+        names(choices1) <- options1Names()
+        choices2 <- as.list(options2Vals())
+        names(choices2) <- options2Names()
         shiny::showModal(restrictionAddModule(session$ns, colnameVals = colnameValues,
                                       choices1 = choices1 , choices2 = choices2))
       }

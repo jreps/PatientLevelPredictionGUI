@@ -62,28 +62,47 @@ server <- shiny::shinyServer(function(input, output, session) {
   popList <- callModule(populationServer, 'populationDev')
 
   # Restrict Analysis
+  options1NamesOP <- shiny::reactiveVal(NULL)
+  options1ValsOP <- shiny::reactiveVal(NULL)
+    shiny::observeEvent(outcomeList(), {
+                   options1NamesOP(outcomeList()$Name)
+                   options1ValsOP(outcomeList()$Id)
+                   })
+
   ## add module to restrict O/P, T/M, T/C pairs
   OPList <- callModule(restrictionServer, 'restrictionPODev',
-                       options1Names = outcomeList()$Name,
-                       options1Vals = outcomeList()$Id,
-                       options2Names = names(popList()),
-                       options2Vals = 1:length(popList()),
+                       options1Names = options1NamesOP,
+                       options1Vals = options1ValsOP,
+                       options2Names = shiny::reactive(names(popList())),
+                       options2Vals = shiny::reactive(1:length(popList())),
                        colnameValues = c('outcomeId', 'populationSettingId'))
 
+  options1NamesMC <- shiny::reactiveVal(NULL)
+    shiny::observeEvent(modelList(), {
+      options1NamesMC(paste(1:length(modelList()),
+                            unlist(lapply(modelList(), function(x) x$name)),
+                            sep = '-'))
+    })
+
   MCList <- callModule(restrictionServer, 'restrictionMCDev',
-                       options1Names = paste(1:length(modelList()),
-                                             unlist(lapply(modelList(), function(x) x$name)),
-                                             sep = '-'),
-                       options1Vals = 1:length(modelList()),
-                       options2Names = 1:length(covList()),#names(covList()),
-                       options2Vals = 1:length(covList()),
+                       options1Names = options1NamesMC,
+                       options1Vals = shiny::reactive(1:length(options1NamesMC())),
+                       options2Names = shiny::reactive(names(covList())),
+                       options2Vals = shiny::reactive(1:length(covList())),
                        colnameValues = c('modelSettingId', 'covariateSettingId'))
 
+  options1NamesTC <- shiny::reactiveVal(NULL)
+  options1ValsTC <- shiny::reactiveVal(NULL)
+    shiny::observeEvent(targetList(), {
+      options1NamesTC(targetList()$Name)
+      options1ValsTC(targetList()$Id)
+    })
+
   TCList <- callModule(restrictionServer, 'restrictionTCDev',
-                       options1Names = targetList()$Name,
-                       options1Vals = targetList()$Id,
-                       options2Names = 1:length(covList()),#names(covList()),
-                       options2Vals = 1:length(covList()),
+                       options1Names = options1NamesTC,
+                       options1Vals = options1ValsTC,
+                       options2Names = shiny::reactive(names(covList())),
+                       options2Vals = shiny::reactive(1:length(covList())),
                        colnameValues = c('targetId', 'covariateSettingId'))
 
   # Execute settings

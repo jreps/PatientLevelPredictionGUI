@@ -9,7 +9,7 @@ modelViewer <- function(id, label = "Model") {
 
                       # add a model
                       shiny::selectInput(inputId = ns('modelSelect'), label = 'Model:',
-                                         choices = c('LassoLogisticRegression', 'GradientBoostingMachine', 'RandomForest'),
+                                         choices = c('LassoLogisticRegression', 'GradientBoostingMachine', 'RandomForest', 'AdaBoost', 'DecisionTree', 'CoxModel'),
                                          multiple = F),
                       shiny::actionButton(inputId = ns('modelAdd'),
                                           label = 'Add Model')
@@ -106,6 +106,58 @@ modelServer <- #function(id) {
                                                  minRows = input$GBMminRows,
                                                  learnRate = input$GBMlearnRate,
                                                  seed = input$GBMseed
+                                 ))
+      modelList(oldList)
+      shiny::removeModal()
+    })
+
+    shiny::observeEvent(input$addRF, {
+      indVal <-selectedRow()
+      oldList <- modelList()
+      oldList[[indVal]] <- list( name = 'RandomForest',
+                                 settings = list(mtries = input$RFmtries,
+                                                 ntrees = input$RFntrees,
+                                                 maxDepth = input$RFmaxDepth,
+                                                 varImp = input$RFvarImp,
+                                                 seed = input$RFseed
+                                 ))
+      modelList(oldList)
+      shiny::removeModal()
+    })
+
+    shiny::observeEvent(input$addAB, {
+      indVal <-selectedRow()
+      oldList <- modelList()
+      oldList[[indVal]] <- list( name = 'AdaBoost',
+                                 settings = list(nEstimators = input$ABnEstimators,
+                                                 learningRate= input$ABlearningRate,
+                                                 seed = input$ABseed
+                                 ))
+      modelList(oldList)
+      shiny::removeModal()
+    })
+
+    shiny::observeEvent(input$addDT, {
+      indVal <-selectedRow()
+      oldList <- modelList()
+      oldList[[indVal]] <- list( name = 'DecisionTree',
+                                 settings = list(maxDepth = input$DTmaxDepth,
+                                                 minSamplesSplit = input$DTminSamplesSplit,
+                                                 minSamplesLeaf = input$DTminSamplesLeaf,
+                                                 minImpurityDecrease = input$DTminImpurityDecrease,
+                                                 classWeight = input$DTclassWeight,
+                                                 seed = input$DTseed
+                                 ))
+      modelList(oldList)
+      shiny::removeModal()
+    })
+
+    shiny::observeEvent(input$addCM, {
+      indVal <-selectedRow()
+      oldList <- modelList()
+      oldList[[indVal]] <- list( name = 'CoxModel',
+                                 settings = list(variance = input$CMvariance,
+                                                 seed = input$CMseed
                                  ))
       modelList(oldList)
       shiny::removeModal()
@@ -210,6 +262,139 @@ modelModalLR <- function(ns, model = list()) {
   )
 }
 
+modelModalRF <- function(ns, model = list()) {
+  modalDialog(
+
+    shiny::textInput(inputId = ns('RFmtries'),
+                     label = 'mtries:',
+                     value = ifelse(!is.null(model$settings$mtries),model$settings$mtries, '-1'),
+                     placeholder = ifelse(!is.null(model$settings$mtries),model$settings$mtries, '-1')
+    ),
+
+    shiny::textInput(inputId = ns('RFntrees'),
+                     label = 'N trees:',
+                     value = ifelse(!is.null(model$settings$ntrees),model$settings$ntrees, '50,500'),
+                     placeholder = ifelse(!is.null(model$settings$ntrees),model$settings$ntrees, '50,500')
+    ),
+
+    shiny::textInput(inputId = ns('RFmaxDepth'),
+                     label = 'Max Depth:',
+                     value = ifelse(!is.null(model$settings$maxDepth),model$settings$maxDepth, '2,4,7,10'),
+                     placeholder = ifelse(!is.null(model$settings$maxDepth),model$settings$maxDepth, '2,4,7,10')
+    ),
+    shiny::checkboxInput(inputId = ns('RFvarImp'),
+                     label = 'Do a preliminary variable importance to filter variables to smaller number:',
+                     value = ifelse(!is.null(model$settings$varImp),model$settings$varImp,T)
+    ),
+    shiny::numericInput(inputId = ns('RFseed'),
+                        label = 'Seed:',
+                        value = ifelse(!is.null(model$settings$seed),model$settings$seed,111),
+                        min = 1,
+                        max = 100000,
+                        step = 1),
+
+    footer = shiny::tagList(
+      shiny::actionButton(ns('addRF'), 'Update RandomForest')
+    )
+
+  )}
+
+modelModalAB <- function(ns, model = list()) {
+  modalDialog(
+
+    shiny::textInput(inputId = ns('ABnEstimators'),
+                     label = 'nEstimators:',
+                     value = ifelse(!is.null(model$settings$nEstimators),model$settings$nEstimators, '50'),
+                     placeholder = ifelse(!is.null(model$settings$nEstimators),model$settings$nEstimators, '50')
+    ),
+
+    shiny::textInput(inputId = ns('ABlearningRate'),
+                     label = 'learningRate:',
+                     value = ifelse(!is.null(model$settings$learningRate),model$settings$learningRate, '1'),
+                     placeholder = ifelse(!is.null(model$settings$learningRate),model$settings$learningRate, '1')
+    ),
+
+    shiny::numericInput(inputId = ns('ABseed'),
+                        label = 'Seed:',
+                        value = ifelse(!is.null(model$settings$seed),model$settings$seed,111),
+                        min = 1,
+                        max = 100000,
+                        step = 1),
+
+    footer = shiny::tagList(
+      shiny::actionButton(ns('addAB'), 'Update AdaBoost')
+    )
+
+  )}
+
+modelModalDT <- function(ns, model = list()) {
+  modalDialog(
+
+    shiny::textInput(inputId = ns('DTmaxDepth'),
+                     label = 'maxDepth:',
+                     value = ifelse(!is.null(model$settings$maxDepth),model$settings$maxDepth, '10'),
+                     placeholder = ifelse(!is.null(model$settings$maxDepth),model$settings$maxDepth, '10')
+    ),
+
+    shiny::textInput(inputId = ns('DTminSamplesSplit'),
+                     label = 'minSamplesSplit:',
+                     value = ifelse(!is.null(model$settings$minSamplesSplit),model$settings$minSamplesSplit, '2'),
+                     placeholder = ifelse(!is.null(model$settings$minSamplesSplit),model$settings$minSamplesSplit, '2')
+    ),
+
+    shiny::textInput(inputId = ns('DTminSamplesLeaf'),
+                     label = 'minSamplesLeaf:',
+                     value = ifelse(!is.null(model$settings$minSamplesSplit),model$settings$minSamplesSplit, '10'),
+                     placeholder = ifelse(!is.null(model$settings$minSamplesSplit),model$settings$minSamplesSplit, '10')
+    ),
+
+    shiny::textInput(inputId = ns('DTminImpurityDecrease'),
+                     label = 'minImpurityDecrease:',
+                     value = ifelse(!is.null(model$settings$minImpurityDecrease),model$settings$minImpurityDecrease, '0.000001'),
+                     placeholder = ifelse(!is.null(model$settings$minImpurityDecrease),model$settings$minImpurityDecrease, '0.000001')
+    ),
+
+    shiny::selectInput(inputId = ns('DTclassWeight'),
+                       label = 'classWeight:',
+                       choices = c('Balance', 'None'),
+                       selected = ifelse(!is.null(model$settings$classWeight),model$settings$classWeight,'None')
+    ),
+
+    shiny::numericInput(inputId = ns('DTseed'),
+                        label = 'Seed:',
+                        value = ifelse(!is.null(model$settings$seed),model$settings$seed,111),
+                        min = 1,
+                        max = 100000,
+                        step = 1),
+
+    footer = shiny::tagList(
+      shiny::actionButton(ns('addDT'), 'Update DecisionTree')
+    )
+
+  )}
+
+modelModalCM <- function(ns, model = list()) {
+  modalDialog(
+
+    shiny::numericInput(inputId = ns('CMvariance'),
+                        label = 'Variance:',
+                        value = ifelse(!is.null(model$settings$variance),model$settings$variance, 0.001),
+                        min = 0,
+                        max = 1000,
+                        step = 0.001),
+    shiny::numericInput(inputId = ns('CMseed'),
+                        label = 'Seed:',
+                        value = ifelse(!is.null(model$settings$seed),model$settings$seed,111),
+                        min = 1,
+                        max = 100000,
+                        step = 1),
+
+    footer = shiny::tagList(
+      shiny::actionButton(ns('addCM'), 'Update CoxModel')
+    )
+
+  )}
+
 modelModalDelete <- function(ns) {
   shiny::modalDialog(
 
@@ -231,6 +416,15 @@ getType <- function(modelSelect){
   }
   if(modelSelect == 'RandomForest'){
     type <- 'RF'
+  }
+  if(modelSelect == 'CoxModel'){
+    type <- 'CM'
+  }
+  if(modelSelect == 'AdaBoost'){
+    type <- 'AB'
+  }
+  if(modelSelect == 'DecisionTree'){
+    type <- 'DT'
   }
 
   return(type)
