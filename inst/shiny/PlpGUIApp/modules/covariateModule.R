@@ -878,7 +878,7 @@ covariateModuleStandard <- function(ns, settings, ...) { # settings is list(fnct
                                                       value = ifelse(is.null(settings$settings$useVisitCountMediumTerm), F, settings$settings$useVisitCountMediumTerm),inline = T,
                                                       label = "Medium Term", icon = icon("check")
                         ),
-                        shinyWidgets::prettyCheckbox( inputId = ns("uuseVisitCountShortTerm"),
+                        shinyWidgets::prettyCheckbox( inputId = ns("useVisitCountShortTerm"),
                                                       value = ifelse(is.null(settings$settings$useVisitCountShortTerm), F, settings$settings$useVisitCountShortTerm), inline = T,
                                                       label = "Short Term", icon = icon("check")
                         )
@@ -895,7 +895,7 @@ covariateModuleStandard <- function(ns, settings, ...) { # settings is list(fnct
                                                       value = ifelse(is.null(settings$settings$useVisitConceptCountMediumTerm), F, settings$settings$useVisitConceptCountMediumTerm),inline = T,
                                                       label = "Medium Term", icon = icon("check")
                         ),
-                        shinyWidgets::prettyCheckbox( inputId = ns("uuseVisitConceptCountShortTerm"),
+                        shinyWidgets::prettyCheckbox( inputId = ns("useVisitConceptCountShortTerm"),
                                                       value = ifelse(is.null(settings$settings$useVisitConceptCountShortTerm), F, settings$settings$useVisitConceptCountShortTerm), inline = T,
                                                       label = "Short Term", icon = icon("check")
                         )

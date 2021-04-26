@@ -1,12 +1,12 @@
 executeViewer <- function(id, label = "Development") {
   ns <- shiny::NS(id)
  shiny::fluidRow(
-   shinydashboard::box('Install',status = 'info',
+   shinydashboard::box(title = 'Install',solidHeader = T,status = 'info',
                        shiny::actionButton(ns('installStudyViewer'), label = 'Click To Install A Study'),
                        shiny::h5("Click the button above to be able to select a study you created using the 'Design' editor or a prediction study found at 'https://github.com/ohdsi-studies'")
    ),
 
-   shinydashboard::box('Execute', status = 'success',
+   shinydashboard::box(title = 'Execute',solidHeader = T, status = 'success',
                        shiny::actionButton(ns('executeStudyViewer'), label = 'Click To Execute A Study'),
                        shiny::h5("Click the button above to pick a study you have installed and execute it (develop a model and/or validate a model)")
    )

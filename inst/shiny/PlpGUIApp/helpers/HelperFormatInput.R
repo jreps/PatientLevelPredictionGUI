@@ -101,8 +101,6 @@ strToVect <- function(x, sepVal=','){
   if(class(x)=="character"){
     if(length(grep(sepVal,x))>0){
       x <- as.double(strsplit(x, sepVal)[[1]])
-      print('modified:')
-      print(x)
       return(x)
     }
   }
@@ -187,11 +185,13 @@ modifySettings <- function(listV){
     }
     if(settings$excludedCovariateConceptIds == ''){
       settings$excludedCovariateConceptIds <- c()
+      settings$addDescendantsToExclude <- NULL
     } else{
       settings$excludedCovariateConceptIds <- c(strToVect(settings$excludedCovariateConceptIds))
     }
     if(settings$includedCovariateConceptIds == ''){
       settings$includedCovariateConceptIds <- c()
+      settings$addDescendantsToInclude <- NULL
     } else{
       settings$includedCovariateConceptIds <- c(strToVect(settings$includedCovariateConceptIds))
     }

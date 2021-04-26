@@ -39,7 +39,13 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   # ===== INSTALLER
   callModule(installServer, 'installPatientLevelPrediction',
-             package = c('PatientLevelPrediction','Hydra'))
+             package = 'PatientLevelPrediction')
+  callModule(installServer, 'installHydra',
+             package = 'Hydra')
+  callModule(installServer, 'installSkeletonPredictionStudy',
+             package = 'SkeletonPredictionStudy')
+  callModule(installServer, 'installSkeletonPredictionValidationStudy',
+             package = 'SkeletonPredictionValidationStudy')
 
   # ===== END INSTALLER
 

@@ -6,7 +6,7 @@ descPlp <- sapply(descPlp, FUN = as.character)
 if(length(grep('Depends:',descPlp))>0 && length(grep('Imports:',descPlp))>0 && length(grep('Suggests:',descPlp))>0){
   depPk <- descPlp[(grep('Depends:',descPlp) + 1): (grep('Imports:',descPlp)-1)]
   importPk <- descPlp[(grep('Imports:',descPlp)+1):(grep('Suggests:',descPlp)-1)]
-  suggestPk <- descPlp[(grep('Suggests:',descPlp)+1):ifelse(length(grep("Remotes:",descPlp))>0, grep("Remotes:",descPlp)-1, grep("NeedsCompilation:",descPlp) - 1)]
+  suggestPk <- descPlp[(grep('Suggests:',descPlp)+1):ifelse(length(grep("Remotes:",descPlp))>0, grep("Remotes:",descPlp)-1, max(grep('  ', descPlp)) )]
 
   plpPk <- rbind(data.frame(name = depPk, type = rep('Dependencies', length(depPk))),
                  data.frame(name = importPk, type = rep('Imports', length(importPk))),
@@ -16,7 +16,7 @@ if(length(grep('Depends:',descPlp))>0 && length(grep('Imports:',descPlp))>0 && l
 
 if(length(grep('Depends:',descPlp))==0 && length(grep('Imports:',descPlp))>0 && length(grep('Suggests:',descPlp))>0){
   importPk <- descPlp[(grep('Imports:',descPlp)+1):(grep('Suggests:',descPlp)-1)]
-  suggestPk <- descPlp[(grep('Suggests:',descPlp)+1):ifelse(length(grep("Remotes:",descPlp))>0, grep("Remotes:",descPlp)-1, grep("NeedsCompilation:",descPlp) - 1)]
+  suggestPk <- descPlp[(grep('Suggests:',descPlp)+1):ifelse(length(grep("Remotes:",descPlp))>0, grep("Remotes:",descPlp)-1,  max(grep('  ', descPlp)) )]
 
   plpPk <- rbind(data.frame(name = importPk, type = rep('Imports', length(importPk))),
                  data.frame(name = suggestPk, type = rep('Suggests', length(suggestPk)))

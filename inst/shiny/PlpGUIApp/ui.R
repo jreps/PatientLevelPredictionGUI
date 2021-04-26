@@ -27,7 +27,7 @@ library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory
 appdir <- file.path("/Users/jreps/Documents/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
 
 
-source(file.path(appdir,"modules","installModule.R"))
+source(file.path(appdir,"modules","installModule2.R"))
 
 source(file.path(appdir,"modules","cohortModule.R"))
 source(file.path(appdir,"modules","modelModule.R"))
@@ -44,7 +44,7 @@ source(file.path(appdir,"modules","executeModule.R"))
 source(file.path(appdir,"helpers","HelperCheckInputs.R"))
 source(file.path(appdir,"helpers","HelperFormatInput.R"))
 source(file.path(appdir,"helpers","createDevelopmentStudyJson.R"))
-source(file.path(appdir,"helpers","HelperCheckPackageDep.R"))
+
 actionButton <- shiny::actionButton
 
 addInfo <- function(item, infoId) {
@@ -108,7 +108,12 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
 
                                         # help tab
                                         shinydashboard::tabItem(tabName = "Install",
-                                                                installViewer("installPatientLevelPrediction", "PatientLevelPrediction")
+                                                                installViewer("installPatientLevelPrediction", "PatientLevelPrediction"),
+                                                                installViewer("installHydra", "Hydra"),
+                                                                installViewer("installSkeletonPredictionStudy", "SkeletonPredictionStudy"),
+                                                                installViewer("installSkeletonPredictionValidationStudy", "SkeletonPredictionValidationStudy")
+
+
                                         ),
 
                                         # help tab

@@ -1,80 +1,66 @@
+appdir <- file.path("/Users/jreps/Documents/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
+source(file.path(appdir,"helpers","HelperCheckPackageDep.R"))
+
 installViewer <- function(id, label = "Package") {
   ns <- shiny::NS(id)
-
-  shinydashboard::box(title = paste0('R configuration:'), width = '60%',
-                      shiny::uiOutput(ns('packageSelect')),
-                      shiny::h3('Install status:'),
-                      shiny::dataTableOutput(ns('installMain')),
-                      shiny::h3('Dependencies:'),
-                      shiny::dataTableOutput(ns('installDeps'))
-  )
+  shiny::uiOutput(ns("placeholder"))
 }
 
 installServer <- function(input, output, session, package) {
 
-  output$packageSelect <- renderUI({
-    shiny::selectInput(inputId = session$ns('package'), label = 'Package:',
-                       choices = package, selected = 1)
+  info <- shiny::reactiveVal(installInfo(package = package))
+
+  output$placeholder = shiny::renderUI({
+    shinydashboard::box(title = package,
+                        status = getStatus(info()$main),
+                        solidHeader = T,
+                        shiny::textOutput(session$ns('availableVersion')),
+                        shiny::textOutput(session$ns('installedVersion')),
+                        shiny::actionButton(inputId = session$ns('install_button'), label = 'Install'),
+                        shiny::actionButton(inputId = session$ns('View'), label = 'View Details')
+        )
   })
 
-  installMain <- shiny::reactiveVal(data.frame())
-  installDeps <- shiny::reactiveVal(data.frame())
-  packageOfInt <- shiny::reactiveVal(package[1])
+  output$availableVersion <- shiny::renderText(paste('Latest Version:', info()$main$versionAvailable))
+  output$installedVersion <- shiny::renderText(paste('Installed Version:', info()$main$versionInsalled))
 
-  shiny::observeEvent(input$package, {
-    info <- installInfo(package = input$package)
-    installMain(info$main)
-    installDeps(info$dependencies)
-
-    output$installMain  <- shiny::renderDataTable({
-      if(nrow(installMain())>0){
-
-        result <- installMain()
-        result <- data.frame(package = result$package,
-                             versionAvailable = result$versionAvailable,
-                             versionInsalled = result$versionInsalled,
-                             Edit = as.character(shiny::actionButton(inputId = paste0('button_',input$package), label = "Install/Update", onclick = sprintf("Shiny.onInputChange('%s', this.id, {priority: \"event\"})", session$ns("install_button"))  )),
-                             stringsAsFactors = FALSE,
-                             row.names = 1 )
-
-      } else{
-        NULL
-      }
-    }, escape = FALSE)
-
-    if( nrow(installDeps()) >0){
-      output$installDeps <- shiny::renderDataTable(installDeps())
-    }
-
-    #install.packages('ResourceSelection')
-  }
-  )
+  output$installDeps <- shiny::renderDataTable(info()$dependencies)
 
 
   # install/update
   shiny::observeEvent(input$install_button, {
-    pkg <- strsplit(input$install_button, "_")[[1]][2]
-    packageOfInt(pkg)
-    shiny::showModal(installPackageModal(session$ns, pkg))
+    shiny::showModal(installPackageModal(session$ns, package))
   })
-
 
   shiny::observeEvent(input$install, {
     # check devtools and install if needed
     install.packages(setdiff('devtools', rownames(installed.packages())))
 
     # install package
-    shiny::showNotification(paste0('Starting to install ',packageOfInt(), ' - modal will close when package install is complete'), duration = 5)
-    devtools::install_github(repo = paste0('ohdsi/',packageOfInt()), upgrade = "never")
-    shiny::showNotification(paste0('Installed ',packageOfInt()), duration = 5)
+    shiny::showNotification(paste0('Starting to install ',package, ' - modal will close when package install is complete'), duration = 5)
+    devtools::install_github(repo = paste0('ohdsi/',package), upgrade = "never")
+
+    status <- ifelse(length(tryCatch({as.character(packageVersion(package))},error = function(e){return(NULL)}))==1, 'success','warning')
+
+    if(status == 'success'){
+      shiny::showNotification(paste0('Installed ',package), duration = 5)
+    }else{
+      shiny::showNotification(paste0('Installation Issue with ',package), duration = 5)
+    }
 
     # update the info
-    info <- installInfo(package = packageOfInt())
-    installMain(info$main)
-    installDeps(info$dependencies)
+    info(installInfo(package = package))
 
     shiny::removeModal()
 
+  })
+
+
+  # launch modal to view details:
+
+  # install/update
+  shiny::observeEvent(input$View, {
+    shiny::showModal(viewPackageModal(session$ns, package))
   })
 
 }
@@ -92,4 +78,29 @@ installPackageModal <- function(ns, pkg) {
       shiny::actionButton(ns('install'), 'Install/Update')
     )
   )
+}
+
+
+viewPackageModal <- function(ns, pkg) {
+  shiny::modalDialog(
+
+    shinydashboard::box(title = paste0(pkg,' Dependencies:'), width = '60%',
+                        shiny::dataTableOutput(ns('installDeps'))
+    ),
+
+    footer = shiny::tagList(
+      shiny::modalButton("Cancel")
+    )
+  )
+}
+
+
+getStatus <- function(x){
+  if(x$versionInsalled == 'Not installed'){
+    return('danger')
+  } else if(x$versionInsalled == x$versionAvailable){
+    return('success')
+  } else{
+    return('warning')
+  }
 }
