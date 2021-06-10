@@ -7,6 +7,8 @@ cohortViewer <- function(id, labelv = "cohorts") {
                       shiny::dataTableOutput(ns('cohortTable')),
 
                       shiny::uiOutput(ns('cohortSelect')),
+                      shiny::textInput(inputId = ns('cohortFilter'),
+                                       label = 'Filter: ', value = ''),
 
                       shiny::actionButton(inputId = ns('addCohort'),
                                           label = paste0('Add ', labelv))
@@ -26,9 +28,15 @@ cohortServer <- #function(id) {
         cohortVar <- as.list(cohortReactive()$id)
         names(cohortVar) <- paste0(cohortReactive()$id, ': ', cohortReactive()$name)
 
+        if(input$cohortFilter!=''){
+          ind <- grep(input$cohortFilter, names(cohortVar))
+        }else{
+          ind <- 1:length(cohortVar)
+        }
+
         shiny::selectizeInput(inputId = session$ns('cohort'),
                               label = 'Cohorts',
-                              choices = cohortVar)
+                              choices = cohortVar[ind])
       }
 
     })

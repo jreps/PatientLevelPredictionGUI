@@ -25,7 +25,7 @@ library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory
 library(httr)
 
 ##appdir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
-appdir <- file.path("/Users/jreps/Documents/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
+appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
 
 source(file.path(appdir,"modules","webApiModule.R"))
 source(file.path(appdir,"modules","cohortExtractModule.R"))
