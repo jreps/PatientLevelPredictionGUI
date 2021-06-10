@@ -8,32 +8,9 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   # ===== WEBAPI
 
-  webApi <- shiny::reactiveVal('')
-  cohortReactive <- shiny::reactiveVal(data.frame())
-  baseUrlCheck <- shiny::reactiveVal('WebAPI: ')
-  output$baseUrlCheck <- shiny::renderText(baseUrlCheck())
-
-  shiny::observeEvent(input$connectwebApi, {
-
-    if(!is.null(input$baseUrl)){
-
-      url <- paste0(input$baseUrl, "/info")
-      response <- tryCatch({httr::GET(url)},
-                           error = function(e){return(NULL)})
-      if(!is.null(response)){
-        baseUrlCheck('WebAPI: (Connected)')
-        showNotification(paste("WebAPI connection works..."), duration = 0, type = 'message')
-        webApi(input$baseUrl)
-        cohorts <- ROhdsiWebApi::getCohortDefinitionsMetaData(webApi())[,c('id', 'name')]
-        cohortReactive(as.data.frame(cohorts))
-      } else{
-        baseUrlCheck('WebAPI:')
-        showNotification(paste("WebAPI input did not connect"), duration = 0, type = 'error')
-        webApi('')
-        cohortReactive(data.frame())
-      }
-    }
-  })
+  webApi <- callModule(webApiServer, 'webApiMain')
+  cohortReactive <- callModule(extractCohortsServer, 'cohortExtract',
+                               webApi = webApi)
 
   # ===== END WEBAPI
 

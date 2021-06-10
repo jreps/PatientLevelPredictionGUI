@@ -22,10 +22,13 @@ library(shinycssloaders)
 library(shinydashboard)
 library(shinyWidgets)
 library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory-input')
+library(httr)
 
 ##appdir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
 appdir <- file.path("/Users/jreps/Documents/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
 
+source(file.path(appdir,"modules","webApiModule.R"))
+source(file.path(appdir,"modules","cohortExtractModule.R"))
 
 source(file.path(appdir,"modules","installModule2.R"))
 
@@ -83,16 +86,19 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                                        shiny::selectInput(inputId = "designType",
                                                                           label = "Type",
                                                                           multiple = F,
-                                                                          choices = c('Development','Validation','Existing Model'),
+                                                                          choices = c('Development','Validation'),
                                                                           selected = 'Development'),
 
+                                                       webApiViewer("webApiMain"),
+                                                       extractCohortsViewer("cohortExtract")
 
-                                                       shiny::textInput(inputId = 'baseUrl',
-                                                                        label = shiny::textOutput('baseUrlCheck') ,
-                                                                        placeholder = 'http://api.ohdsi.org:8080/WebAPI',
-                                                                        value = 'http://api.ohdsi.org:8080/WebAPI'),
-                                                       shiny::actionButton(inputId = 'connectwebApi',
-                                                                           label = 'Connect')
+
+                                                       #shiny::textInput(inputId = 'baseUrl',
+                                                        #                label = shiny::textOutput('baseUrlCheck') ,
+                                                        #                placeholder = 'http://api.ohdsi.org:8080/WebAPI',
+                                                        #                value = 'http://api.ohdsi.org:8080/WebAPI'),
+                                                       #shiny::actionButton(inputId = 'connectwebApi',
+                                                       #                    label = 'Connect')
 
 
 
@@ -167,9 +173,6 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
 
                                                                 ),
                                                                 conditionalPanel(condition = "input.designType=='Validation'",
-                                                                                 'Coming Soon'
-                                                                ),
-                                                                conditionalPanel(condition = "input.designType=='Existing Model'",
                                                                                  'Coming Soon'
                                                                 )
                                         ),
