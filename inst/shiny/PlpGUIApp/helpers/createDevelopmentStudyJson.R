@@ -27,6 +27,9 @@ createDevelopmentStudyJson <- function(packageName = 'exampleStudy',
   json$createdDate <- Sys.Date()
 
   json$runPlpArgs <- executionSettings
+  if(json$runPlpArgs$splitSeed == ""){
+    json$runPlpArgs$splitSeed <- NULL
+  }
   json$getPlpDataArgs<- list(washoutPeriod = 0)
   json$targetIds <- unique(targets$targetId)
   json$targetNames <- unique(targets$targetName)
