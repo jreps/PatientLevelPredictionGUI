@@ -110,6 +110,43 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   # =====
 
+
+
+
+
+  # ===== VALIDATION
+
+  analysisValList <- callModule(analysisServer, 'analysisVal')
+
+  # Cohorts
+  targetValList <- callModule(cohortServer, 'targetVal', cohortReactive)
+  outcomeValList <- callModule(cohortServer, 'outcomeVal', cohortReactive)
+
+  # Population
+  popValList <- callModule(populationServer, 'populationVal')
+
+  # Models
+  ##modelValList <- callModule(modelValidationServer, 'modelVal')
+
+  jsonForValStudy <- callModule(jsonServer, 'jsonVal',
+                             analysisList= analysisValList,
+                             targetList = targetValList,
+                             outcomeList = outcomeValList,
+                             modelList = modelValList,
+                             popList = popValList,
+                             webApi = webApi)
+
+  callModule(downloadServer, 'downloadVal',
+             jsonForStudy = jsonForValStudy,
+             analysisList= analysisValList)
+
+  # =====
+
+
+
+
+
+
   # ===== EXECUTE
   callModule(executeServer, 'executePrediction')
 

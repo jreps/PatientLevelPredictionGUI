@@ -93,14 +93,6 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                                        extractCohortsViewer("cohortExtract")
 
 
-                                                       #shiny::textInput(inputId = 'baseUrl',
-                                                        #                label = shiny::textOutput('baseUrlCheck') ,
-                                                        #                placeholder = 'http://api.ohdsi.org:8080/WebAPI',
-                                                        #                value = 'http://api.ohdsi.org:8080/WebAPI'),
-                                                       #shiny::actionButton(inputId = 'connectwebApi',
-                                                       #                    label = 'Connect')
-
-
 
                                       )
 
@@ -173,7 +165,33 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
 
                                                                 ),
                                                                 conditionalPanel(condition = "input.designType=='Validation'",
-                                                                                 'Coming Soon'
+                                                                                 tabsetPanel(type = "tabs",
+
+                                                                                             tabPanel("Settings",
+
+
+                                                                                                      analysisViewer("analysisVal", "Analysis Settings"),
+
+                                                                                                      cohortViewer("targetVal", "Target"),
+                                                                                                      cohortViewer("outcomeVal", "Outcome"),
+
+                                                                                                      populationViewer("populationVal", "Population Settings")#,
+
+                                                                                                      #modelValViewer("modelVal", "Model Settings")
+
+
+                                                                                             ),
+
+                                                                                             tabPanel("Json",
+                                                                                                      jsonViewer("jsonVal", "json development")
+                                                                                             ),
+
+                                                                                             tabPanel("Download",
+                                                                                                      downloadViewer("downloadVal", "download development")
+                                                                                             )
+
+
+                                                                                 )
                                                                 )
                                         ),
 
