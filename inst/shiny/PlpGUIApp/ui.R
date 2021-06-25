@@ -48,6 +48,10 @@ source(file.path(appdir,"helpers","HelperCheckInputs.R"))
 source(file.path(appdir,"helpers","HelperFormatInput.R"))
 source(file.path(appdir,"helpers","createDevelopmentStudyJson.R"))
 
+
+
+source(file.path(appdir,"modules","existingModelModule.R"))
+
 actionButton <- shiny::actionButton
 
 addInfo <- function(item, infoId) {
@@ -175,9 +179,9 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                                                                                       cohortViewer("targetVal", "Target"),
                                                                                                       cohortViewer("outcomeVal", "Outcome"),
 
-                                                                                                      populationViewer("populationVal", "Population Settings")#,
+                                                                                                      populationViewer("populationVal", "Population Settings"),
 
-                                                                                                      #modelValViewer("modelVal", "Model Settings")
+                                                                                                      existingModelViewer("existingModel", "Model Settings")
 
 
                                                                                              ),

@@ -126,7 +126,7 @@ server <- shiny::shinyServer(function(input, output, session) {
   popValList <- callModule(populationServer, 'populationVal')
 
   # Models
-  ##modelValList <- callModule(modelValidationServer, 'modelVal')
+  modelValList <- callModule(existingModelServer, 'existingModel', cohortReactive, webApi)
 
   jsonForValStudy <- callModule(jsonServer, 'jsonVal',
                              analysisList= analysisValList,
