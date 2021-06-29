@@ -28,7 +28,6 @@ existingModelServer <- #function(id) {
 
     output$modelTable <- shiny::renderDataTable({
       if(length(modelList())>0){
-        print(length(modelList()))
         data.frame(Model = unlist(lapply(modelList(), function(x) x$modelId)),
                    Type = unlist(lapply(modelList(), function(x) x$attr_predictionType)),
                    Predictors = unlist(lapply(modelList(), function(x) length(x$model$coefficients))),
@@ -122,7 +121,8 @@ existingModelServer <- #function(id) {
     output$predictorTable <- shiny::renderDataTable({
       if(length(modelList()[[selectedRow()]]$model$coefficients)!=0){
 
-        data.frame(covariateId = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$covariateId)),
+        data.frame(name = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$covariateName)),
+                   covariateId = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$covariateId)),
                    points = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$points)),
                    offset = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$offset)),
                    power = unlist(lapply(modelList()[[selectedRow()]]$model$coefficients, function(x) x$power)),
@@ -132,7 +132,6 @@ existingModelServer <- #function(id) {
                    Remove = shinyInput(shiny::actionButton, length(modelList()[[selectedRow()]]$model$coefficients), 'pbutton_', label = "Remove", onclick = sprintf("Shiny.onInputChange('%s', this.id, {priority: \"event\"})", session$ns("delete_predictor"))  )
 
         )} else{
-          print('empty')
           NULL
         }
     }, escape = FALSE)
@@ -147,7 +146,7 @@ existingModelServer <- #function(id) {
       # now show editor
       shiny::showModal(viewPredictorModal(ns = session$ns,
                                           cohortReactive,
-                                          predictor = modelList()[selectedRow()]$model$coefficients[[predictorRow()]]))
+                                          predictor = modelList()[[selectedRow()]]$model$coefficients[[predictorRow()]]))
     })
 
 
@@ -156,7 +155,7 @@ existingModelServer <- #function(id) {
     # if clicked popup asks for confirmation and then deletes covariate setting
     shiny::observeEvent(input$delete_predictor, {
 
-      predId <- as.numeric(strsplit(input$select_predictor, "_")[[1]][2])
+      predId <- as.numeric(strsplit(input$delete_predictor, "_")[[1]][2])
       predictorRow(predId)
 
       shiny::showModal(predictorModalDelete(session$ns))
@@ -168,10 +167,10 @@ existingModelServer <- #function(id) {
     shiny::observeEvent(input$addPredictor, {
 
       oldList <- modelList()
-      i <- length(oldList[selectedRow()]$model$coefficients) + 1
+      i <- length(oldList[[selectedRow()]]$model$coefficients) + 1
       predictorRow(i)
-      print(predictorRow())
       oldList[[selectedRow()]]$model$coefficients[[predictorRow()]] <- list(covariateId = 0,
+                                                                            covariateName = '',
                                                                             atlasId = 0,
                                                                             cohortjson = '',
                                                                           points = 0,
@@ -186,14 +185,15 @@ existingModelServer <- #function(id) {
       modelList(oldList)
       shiny::showModal(viewPredictorModal(ns = session$ns,
                                           cohortReactive,
-                                          predictor = modelList()[selectedRow()]$model$coefficients[[predictorRow()]]))
+                                          predictor = modelList()[[selectedRow()]]$model$coefficients[[predictorRow()]]))
     })
 
     shiny::observeEvent(input$updatePredictor, {
       # code to add the predcitor to the current model
       newCoeff <- list(covariateId = as.double(as.character(input$atlasId))*1000+input$analysisId,
+                       covariateName = input$covariateName,
                        atlasId = input$atlasId,
-                       cohortjson = getCohort(as.double(as.character(input$atlasId)), webApi()),
+                       cohortjson = as.character(getCohort(as.double(as.character(input$atlasId)), webApi())),
                    points = input$cohortPoints,
                    offset = input$cohortOffset,
                    power = input$cohortPower,
@@ -203,8 +203,6 @@ existingModelServer <- #function(id) {
                    count = input$count,
                    ageInteraction = input$ageInteraction,
                    lnAgeInteraction = input$lnAgeInteraction)
-
-      print('testing 123')
 
       # update reactive var
       mdl <- modelList()
@@ -219,7 +217,7 @@ existingModelServer <- #function(id) {
 
     shiny::observeEvent(input$deletePredictor, {
       oldList <- modelList()
-      oldList[[selectedRow()]][[predictorRow()]] <- NULL
+      oldList[[selectedRow()]]$model$coefficients[[predictorRow()]] <- NULL
       modelList(oldList)
       shiny::removeModal()
     })
@@ -275,7 +273,9 @@ viewModelModal<- function(ns, model) {
 viewPredictorModal<- function(ns, cohorts, predictor) {
 
   choices <- cohorts()$id
-  names(choices) <- cohorts()$name
+  names(choices) <- paste0(cohorts()$id, ':', cohorts()$name)
+
+  options <- shinyWidgets::pickerOptions(liveSearch = T)
 
   modalDialog(
     # select type
@@ -283,12 +283,19 @@ viewPredictorModal<- function(ns, cohorts, predictor) {
     #                   label = 'Type',
     #                   choices = list(standard = 'standard', cohort = 'cohort'),
     #                   selected = 'standard')
-    shiny::selectInput(inputId = ns('atlasId'), label = 'Select covariate cohort: ',
-                       choices = choices, selected = predictor$atlasId),
+
+    shiny::textInput(inputId = ns('covariateName'),
+                     label = 'Name: ', value = ifelse(is.null(predictor$covariateName), '', predictor$covariateName)),
+
+    shinyWidgets::pickerInput(inputId = ns('atlasId'),
+                              label = 'Select covariate cohort: ',
+                              choices = choices,
+                              selected = predictor$atlasId,
+                              multiple = F,
+                              options = options),
+
     shiny::textInput(inputId = ns('cohortFilter'),
                      label = 'Filter: ', value = ''),
-
-    #shiny::textInput(inputId = ns('cohortCovName'), label = 'Covariate name:'),
     shiny::numericInput(inputId = ns('analysisId'), label = 'analysisId (between 400 and 500): ', min=400, max = 500,
                         value = ifelse(is.null(predictor$analysisId), 457, predictor$analysisId)),
     shiny::numericInput(inputId = ns('startDay'), label = 'startDay: ',
