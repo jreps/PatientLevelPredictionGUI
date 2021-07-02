@@ -44,10 +44,6 @@ source(file.path(appdir,"modules","downloadModule.R"))
 
 source(file.path(appdir,"modules","executeModule.R"))
 
-source(file.path(appdir,"helpers","HelperCheckInputs.R"))
-source(file.path(appdir,"helpers","HelperFormatInput.R"))
-source(file.path(appdir,"helpers","createDevelopmentStudyJson.R"))
-
 
 
 source(file.path(appdir,"modules","existingModelModule.R"))
@@ -175,11 +171,6 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
 
 
                                                                                                       analysisViewer("analysisVal", "Analysis Settings"),
-
-                                                                                                      cohortViewer("targetVal", "Target"),
-                                                                                                      cohortViewer("outcomeVal", "Outcome"),
-
-                                                                                                      populationViewer("populationVal", "Population Settings"),
 
                                                                                                       existingModelViewer("existingModel", "Model Settings")
 

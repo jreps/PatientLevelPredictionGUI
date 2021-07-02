@@ -1,3 +1,8 @@
+appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
+source(file.path(appdir,"helpers","HelperCheckInputs.R"))
+source(file.path(appdir,"helpers","HelperFormatInput.R"))
+source(file.path(appdir,"helpers","createDevelopmentStudyJson.R"))
+
 jsonViewer <- function(id, label = "Json") {
   ns <- shiny::NS(id)
 
@@ -15,6 +20,7 @@ jsonServer <- #function(id) {
   #moduleServer(
   #id,
   function(input, output, session,
+           type = 'development',
            analysisList,
            targetList,
            outcomeList,
@@ -29,10 +35,11 @@ jsonServer <- #function(id) {
 
 
     jsonForStudy <- shiny::reactiveVal('')
-    createDevelopmentStudyJsonList <- shiny::reactiveVal(list())
+    createStudyJsonList <- shiny::reactiveVal(list())
     valid <- shiny::reactiveVal('')
 
     shiny::observeEvent(input$jsonGenerate, {
+      if(type == 'development'){
       valid(checkPredictionSkeleton(analysisList(),
                                     targetList(),
                                     outcomeList(),
@@ -42,11 +49,14 @@ jsonServer <- #function(id) {
                                     OPList(),
                                     MCList(),
                                     TCList(),
-                                    executeList()
-      ))
+                                    executeList()))
+      }else{
+        valid(checkValidationSkeleton(analysisList(),
+                                      modelList()))
+      }
 
-      if(valid() == ''){
-        createDevelopmentStudyJsonList(formatSettings(analysisList(),
+      if(valid() == '' && type == 'development'){
+        createStudyJsonList(formatSettings(analysisList(),
                                                       targetList(),
                                                       outcomeList(),
                                                       modelList(),
@@ -57,13 +67,18 @@ jsonServer <- #function(id) {
                                                       TCList(),
                                                       executeList()
         ))
-      } else{
+      } else if(valid() == '' && type == 'validation'){
+        settings <- formatValidationSettings(analysisList(),
+                                 modelList())
+        createStudyJsonList(settings)
+      }
+      else{
         shiny::showNotification(valid(), duration = 5, type = 'error')
       }
 
-      if(length(createDevelopmentStudyJsonList())>0 && webApi() != ''){
-        jsonForStudy(createJson(createDevelopmentStudyJsonList(), webApi() ))
-        ##output$jsonCode <- shiny::renderPrint(js)
+      if(length(createStudyJsonList())>0 && webApi() != ''){
+        json <- createJson(type, createStudyJsonList(), webApi() )
+        jsonForStudy(json)
         output$jsonCode <- shiny::renderUI({shiny::HTML(gsub('\n','', gsub("/n", "<br/>",
                                                                            jsonForStudy()
         ))
@@ -82,3 +97,20 @@ jsonServer <- #function(id) {
     return(jsonForStudy)
 
   }
+
+
+createJson <- function(type,createStudyJsonList, webApi){
+
+
+  # this write
+  if(type == 'development'){
+    createStudyJsonList$webApi <- webApi
+    jsonForStudy <- do.call('createDevelopmentStudyJson', createStudyJsonList)
+  }
+  if(type == 'validation'){
+    #jsonForStudy <- do.call('createValidationStudyJson', createStudyJsonList)
+    jsonForStudy <- createStudyJsonList
+  }
+
+  return(jsonForStudy)
+}

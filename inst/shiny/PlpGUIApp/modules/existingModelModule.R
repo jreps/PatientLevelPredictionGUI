@@ -28,8 +28,10 @@ existingModelServer <- #function(id) {
 
     output$modelTable <- shiny::renderDataTable({
       if(length(modelList())>0){
-        data.frame(Model = unlist(lapply(modelList(), function(x) x$modelId)),
+        data.frame(Model = unlist(lapply(modelList(), function(x) x$name)),
                    Type = unlist(lapply(modelList(), function(x) x$attr_predictionType)),
+                   cohortId = unlist(lapply(modelList(), function(x) x$cohortId)),
+                   outcomeId = unlist(lapply(modelList(), function(x) x$outcomeId)),
                    Predictors = unlist(lapply(modelList(), function(x) length(x$model$coefficients))),
                    Edit= shinyInput(shiny::actionButton, length(modelList()), 'pbutton_', label = "Edit", onclick = sprintf("Shiny.onInputChange('%s', this.id, {priority: \"event\"})", session$ns("select_button"))  ),
                    stringsAsFactors = FALSE,
@@ -49,12 +51,19 @@ existingModelServer <- #function(id) {
       oldList <- modelList()
       i <- length(oldList)
       oldList[[i+1]] <- list(modelId = i+1,
+                             name = paste0('model ', i+1),
+                             cohortId = 0,
+                             cohort_json = NULL,
+                             outcomeId = 0,
+                             outcome_json = NULL,
+                             populationSettings = PatientLevelPrediction::createStudyPopulationSettings(),
+                             covariateSettings = list(),
                              new = TRUE,
                              attr_predictionType = 'binary',
                              attr_type = 'nonPlpGlm',
                              model = list(
                                coefficients = list(),
-                               finalMapping = 'function(x){return(x)}',
+                               finalMapping = 'function(x){return(1/(1+exp(-x)))}',
                                offset = NULL,
                                baselineHazard = NULL))
       modelList(oldList)
@@ -62,7 +71,9 @@ existingModelServer <- #function(id) {
       # set the row selector
       selectedRow(i+1)
       # now show editor
-      shiny::showModal(viewModelModal(ns = session$ns, model = modelList()[[selectedRow()]]))
+      shiny::showModal(viewModelModal(ns = session$ns, model =
+                                        modelList()[[selectedRow()]],
+                                      cohorts = cohortReactive))
     })
 
 
@@ -77,9 +88,16 @@ existingModelServer <- #function(id) {
       model$baselineHazard <- input$baselineHazard
 
       oldList[[selectedRow()]] <- list(modelId = selectedRow(),
+                                       name = input$name,
                              new = FALSE,
                              attr_predictionType = input$attr_predictionType,
                              attr_type = input$attr_type,
+                             cohortId = input$cohortId,
+                             cohort_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$cohortId), webApi()),
+                             outcomeId = input$outcomeId,
+                             outcome_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$outcomeId), webApi()),
+                             populationSettings = oldList[[selectedRow()]]$populationSettings, # add
+                             covariateSettings = list(),
                              model = model)
       modelList(oldList)
 
@@ -100,7 +118,9 @@ existingModelServer <- #function(id) {
       selectedRow(as.numeric(strsplit(input$select_button, "_")[[1]][2]))
 
       # now show editor
-      shiny::showModal(viewModelModal(ns = session$ns, model = modelList()[[selectedRow()]]))
+      shiny::showModal(viewModelModal(ns = session$ns,
+                                      model = modelList()[[selectedRow()]],
+                                      cohorts = cohortReactive))
     })
 
 
@@ -141,7 +161,6 @@ existingModelServer <- #function(id) {
 
       predId <- as.numeric(strsplit(input$select_predictor, "_")[[1]][2])
       predictorRow(predId)
-      #modelList()[selectedRow()]$model$coefficient[predictor(),]
 
       # now show editor
       shiny::showModal(viewPredictorModal(ns = session$ns,
@@ -166,22 +185,30 @@ existingModelServer <- #function(id) {
     # add predictors
     shiny::observeEvent(input$addPredictor, {
 
+      # update the current values in the model settings then open a new predictor module
       oldList <- modelList()
+
+      model <- oldList[[selectedRow()]]$model
+      model$finalMapping <- input$finalMapping
+      model$offset <- input$offset
+      model$baselineHazard <- input$baselineHazard
+      oldList[[selectedRow()]] <- list(modelId = selectedRow(),
+                                       name = input$name,
+                                       new = FALSE,
+                                       attr_predictionType = input$attr_predictionType,
+                                       attr_type = input$attr_type,
+                                       cohortId = input$cohortId,
+                                       cohort_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$cohortId), webApi()),
+                                       outcomeId = input$outcomeId,
+                                       outcome_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$outcomeId), webApi()),
+                                       populationSettings = oldList[[selectedRow()]]$populationSettings, # add
+                                       covariateSettings = list(),
+                                       model = model)
+
+      # add new predictor
       i <- length(oldList[[selectedRow()]]$model$coefficients) + 1
       predictorRow(i)
-      oldList[[selectedRow()]]$model$coefficients[[predictorRow()]] <- list(covariateId = 0,
-                                                                            covariateName = '',
-                                                                            atlasId = 0,
-                                                                            cohortjson = '',
-                                                                          points = 0,
-                                                                          offset = 0,
-                                                                          power = 0,
-                                                                          analysisId = 0,
-                                                                          startDay = 0,
-                                                                          endDay = 0,
-                                                                          count = F,
-                                                                          ageInteraction = F,
-                                                                          lnAgeInteraction = F)
+      oldList[[selectedRow()]]$model$coefficients[[predictorRow()]] <- newPredictor()
       modelList(oldList)
       shiny::showModal(viewPredictorModal(ns = session$ns,
                                           cohortReactive,
@@ -192,7 +219,7 @@ existingModelServer <- #function(id) {
       # code to add the predcitor to the current model
       newCoeff <- list(covariateId = as.double(as.character(input$atlasId))*1000+input$analysisId,
                        covariateName = input$covariateName,
-                       atlasId = input$atlasId,
+                       cohortId = input$atlasId,
                        cohortjson = as.character(getCohort(as.double(as.character(input$atlasId)), webApi())),
                    points = input$cohortPoints,
                    offset = input$cohortOffset,
@@ -211,7 +238,9 @@ existingModelServer <- #function(id) {
 
       ##shiny::removeModal()
       # now show editor
-      shiny::showModal(viewModelModal(ns = session$ns, model = modelList()[[selectedRow()]]))
+      shiny::showModal(viewModelModal(ns = session$ns,
+                                      model = modelList()[[selectedRow()]],
+                                      cohorts = cohortReactive))
 
     })
 
@@ -222,12 +251,100 @@ existingModelServer <- #function(id) {
       shiny::removeModal()
     })
 
+
+
+
+    # update the pop settings in the model
+    shiny::observeEvent(input$populationSettings, {
+
+      # save current settings in model:
+      oldList <- modelList()
+      model <- oldList[[selectedRow()]]$model
+      model$finalMapping <- input$finalMapping
+      model$offset <- input$offset
+      model$baselineHazard <- input$baselineHazard
+      oldList[[selectedRow()]] <- list(modelId = selectedRow(),
+                                       name = input$name,
+                                       new = FALSE,
+                                       attr_predictionType = input$attr_predictionType,
+                                       attr_type = input$attr_type,
+                                       cohortId = input$cohortId,
+                                       cohort_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$cohortId), webApi()),
+                                       outcomeId = input$outcomeId,
+                                       outcome_json = ROhdsiWebApi::getCohortDefinition(as.numeric(input$outcomeId), webApi()),
+                                       populationSettings = oldList[[selectedRow()]]$populationSettings, # add
+                                       covariateSettings = list(),
+                                       model = model)
+      modelList(oldList)
+
+      # open pop module
+      shiny::showModal(viewPopulationModal(ns = session$ns,
+                                           populationSettings = modelList()[[selectedRow()]]$populationSettings
+                                      )
+                       )
+
+    })
+
+    shiny::observeEvent(input$updatePopulationSettings, {
+      oldList <- modelList()
+      populationSettings = list(binary = oldList[[selectedRow()]]$attr_type,
+                                riskWindowStart = input$riskWindowStart,
+                                startAnchor = input$startAnchor,
+                                riskWindowEnd = input$riskWindowEnd,
+                                endAnchor = input$endAnchor,
+                                requireTimeAtRisk = input$requireTimeAtRisk,
+                                minTimeAtRisk = input$minTimeAtRisk,
+                                removeSubjectsWithPriorOutcome = input$removeSubjectsWithPriorOutcome,
+                                priorOutcomeLookback = input$priorOutcomeLookback,
+                                firstExposureOnly = input$firstExposureOnly,
+                                washoutPeriod = input$washoutPeriod
+                                )
+      oldList[[selectedRow()]]$populationSettings <- populationSettings
+
+      modelList(oldList)
+
+      shiny::showModal(viewModelModal(ns = session$ns,
+                                      model = modelList()[[selectedRow()]],
+                                      cohorts = cohortReactive))
+    })
+
+
     return(modelList)
   }
 
 
-viewModelModal<- function(ns, model) {
+# START MODALS
+# =========================
+
+viewModelModal<- function(ns, model, cohorts) {
+  choices <- cohorts()$id
+  names(choices) <- paste0(cohorts()$id, ':', cohorts()$name)
+
+  options <- shinyWidgets::pickerOptions(liveSearch = T, showTick = T)
+
   modalDialog(
+
+    shiny::textInput(inputId = ns('name'),
+                     label = 'Model name:',
+                     value = ifelse(!is.null(model$name), model$name, 'model name')),
+
+    shinyWidgets::pickerInput(inputId = ns('cohortId'),
+                              label = 'Select target cohort: ',
+                              choices = choices,
+                              selected = model$cohortId,
+                              multiple = F,
+                              options = options),
+
+    shinyWidgets::pickerInput(inputId = ns('outcomeId'),
+                              label = 'Select outcome: ',
+                              choices = choices,
+                              selected = model$outcomeId,
+                              multiple = F,
+                              options = options),
+
+    # button to select pop
+    shiny::actionButton(inputId = ns('populationSettings'), label = 'Edit Population Settings'),
+
     shiny::selectInput(inputId = ns('attr_predictionType'),
                        label = 'Model type:',
                        choices = list(binary = 'binary',
@@ -241,10 +358,10 @@ viewModelModal<- function(ns, model) {
                        selected = ifelse(!is.null(model$attr_type), model$attr_type, 'nonPlpGlm')
     ),
 
-    shiny::textInput(inputId = ns('finalmapping'),
+    shiny::textInput(inputId = ns('finalMapping'),
                      label = 'Final Mapping:',
-                     value = ifelse(!is.null(model$model$finalmapping), model$model$finalmapping, 'f(x){return(x)}'),
-                     placeholder = ifelse(!is.null(model$model$finalmapping), model$model$finalmapping, 'f(x){return(x)}')
+                     value = ifelse(!is.null(model$model$finalMapping), model$model$finalMapping, 'f(x){return(1/(1+exp(-x)))}'),
+                     placeholder = ifelse(!is.null(model$model$finalMapping), model$model$finalMapping, 'f(x){return(1/(1+exp(-x)))}')
                       ),
 
     shiny::numericInput(inputId = ns('offset'),
@@ -253,9 +370,9 @@ viewModelModal<- function(ns, model) {
                         min = -10000000,
                         max = 10000000,
                         step = 0.001),
-    shiny::numericInput(inputId = ns('baselinehazard'),
+    shiny::numericInput(inputId = ns('baselineHazard'),
                         label = 'Baseline Hazard:',
-                        value = ifelse(!is.null(model$model$baselinehazard),model$model$baselinehazard,0.1),
+                        value = ifelse(!is.null(model$model$baselineHazard),model$model$baselineHazard,0.1),
                         min = 0,
                         max = 1,
                         step = 0.001),
@@ -275,7 +392,7 @@ viewPredictorModal<- function(ns, cohorts, predictor) {
   choices <- cohorts()$id
   names(choices) <- paste0(cohorts()$id, ':', cohorts()$name)
 
-  options <- shinyWidgets::pickerOptions(liveSearch = T)
+  options <- shinyWidgets::pickerOptions(liveSearch = T, showTick = T)
 
   modalDialog(
     # select type
@@ -290,12 +407,10 @@ viewPredictorModal<- function(ns, cohorts, predictor) {
     shinyWidgets::pickerInput(inputId = ns('atlasId'),
                               label = 'Select covariate cohort: ',
                               choices = choices,
-                              selected = predictor$atlasId,
+                              selected = predictor$cohortId,
                               multiple = F,
                               options = options),
 
-    shiny::textInput(inputId = ns('cohortFilter'),
-                     label = 'Filter: ', value = ''),
     shiny::numericInput(inputId = ns('analysisId'), label = 'analysisId (between 400 and 500): ', min=400, max = 500,
                         value = ifelse(is.null(predictor$analysisId), 457, predictor$analysisId)),
     shiny::numericInput(inputId = ns('startDay'), label = 'startDay: ',
@@ -348,6 +463,43 @@ predictorModalDelete <- function(ns) {
 }
 
 
+viewPopulationModal<- function(ns, populationSettings) {
+
+  modalDialog(
+
+    shiny::numericInput(inputId = ns('riskWindowStart'),
+                     label = 'riskWindowStart:',
+                     value = ifelse(!is.null(populationSettings$riskWindowStart), populationSettings$riskWindowStart, 1)),
+    shiny::selectInput(inputId = ns('startAnchor') , label = 'startAnchor', choices = list('cohort start','cohort end'), selected = populationSettings$startAnchor),
+
+    shiny::numericInput(inputId = ns('riskWindowEnd'),
+                        label = 'riskWindowEnd:',
+                        value = ifelse(!is.null(populationSettings$riskWindowEnd), populationSettings$riskWindowEnd, 365)),
+    shiny::selectInput(inputId = ns('endAnchor') , label = 'endAnchor', choices = list('cohort start','cohort end'), selected = populationSettings$endAnchor),
+
+    shiny::checkboxInput(inputId = ns('requireTimeAtRisk'), label = 'requireTimeAtRisk', value = populationSettings$requireTimeAtRisk),
+    shiny::numericInput(inputId = ns('minTimeAtRisk'),
+                        label = 'minTimeAtRisk:',
+                        value = ifelse(!is.null(populationSettings$minTimeAtRisk), populationSettings$minTimeAtRisk, 0)),
+    shiny::checkboxInput(inputId = ns('removeSubjectsWithPriorOutcome'), label = 'removeSubjectsWithPriorOutcome', value = populationSettings$removeSubjectsWithPriorOutcome),
+    shiny::numericInput(inputId = ns('priorOutcomeLookback'),
+                        label = 'priorOutcomeLookback:',
+                        value = ifelse(!is.null(populationSettings$priorOutcomeLookback), populationSettings$priorOutcomeLookback, -9999)),
+
+    shiny::checkboxInput(inputId = ns('firstExposureOnly'), label = 'firstExposureOnly', value = populationSettings$firstExposureOnly),
+    shiny::numericInput(inputId = ns('washoutPeriod'),
+                        label = 'washoutPeriod:',
+                        value = ifelse(!is.null(populationSettings$washoutPeriod), populationSettings$washoutPeriod, -9999)),
+
+
+    footer = shiny::tagList(
+      shiny::actionButton(ns('updatePopulationSettings'),  'Update')
+    )
+
+  )}
+
+# END MODALS
+# =========================
 
 # helpers
 
@@ -365,3 +517,32 @@ getCohort <- function(atlasId, webApi){
   return(cohort)
 }
 
+
+newPredictor <- function(covariateId = 0,
+                        covariateName = '',
+                        cohortId = 0,
+                        cohortjson = '',
+                        points = 0,
+                        offset = 0,
+                        power = 1,
+                        analysisId = 467,
+                        startDay = -9999,
+                        endDay = 0,
+                        count = F,
+                        ageInteraction = F,
+                        lnAgeInteraction = F){
+
+  list(covariateId = covariateId,
+       covariateName = covariateName,
+       cohortId = cohortId,
+       cohortjson = cohortjson,
+       points = points,
+       offset = offset,
+       power = power,
+       analysisId = analysisId,
+       startDay = startDay,
+       endDay = endDay,
+       count = count,
+       ageInteraction = ageInteraction,
+       lnAgeInteraction = lnAgeInteraction)
+}

@@ -60,39 +60,85 @@ formatSettings <- function(analysisList,
 
 }
 
+formatValidationSettings <- function(analysisList,
+                                     modelList){
 
-createJson <- function(createDevelopmentStudyJsonList, webApi){
+  #cohortDefitions
+  cohortDefinitions <- getCohortDefinitions(modelList)
 
-  createDevelopmentStudyJsonList$webApi <- webApi
+  #models
+  # - name, settings, cohort_id, outcome_id, populationSettings, covariateSettings (fnct, settings),
+  #   attr_predictionType, attr_type
+  for(i in 1:length(modelList)){
+    modelList[[i]] <- modelList[[i]][!names(modelList[[i]]) %in% c('new','cohort_json','cohort_json','outcome_json')]
+    modelList[[i]]$populationSettings <- modelList[[i]]$populationSettings
+    modelList[[i]]$covariateSettings <- createCovariateList(modelList[[i]])
+    modelList[[i]]$settings <- list()
+    if(length(modelList)==1){
+      modelList[[i]]$model <- list(formatValidationModel(modelList[[i]]$model))
+    }else{
+      modelList[[i]]$model <- formatValidationModel(modelList[[i]]$model)
+    }
+  }
 
-  # this write
-  jsonForStudy <- do.call('createDevelopmentStudyJson', createDevelopmentStudyJsonList)
 
-  return(jsonForStudy)
+  createValidationStudyJsonList <- list(skeletonVersion = 'v1.0.1',
+                                        skeletonType = "PatientLevelPredictionValidationStudy",
+                                        packageName = analysisList$packageName,
+                                        packageDescription = analysisList$packageDescription,
+                                        createdBy = analysisList$createBy,
+                                        createdDate = as.character(Sys.Date()),
+                                        organizationName = analysisList$organizationName,
+                                        models = modelList,
+                                        cohortDefinitions = cohortDefinitions)
+
+  #ParallelLogger::saveSettingsToJson(createValidationStudyJsonList,
+  #                                   file.path('/Users/jreps/Documents/', 'valJson.json'))
+
+  exportJson <- RJSONIO::toJSON(createValidationStudyJsonList, digits = 23)
+
+  return(exportJson)
 }
 
-createPackage <- function(jsonForStudy,
-                          outputPackageLocation = 'D:/testing/package',
-                          outputJsonLocation = NULL,
-                          jsonName = 'predictionAnalysisList.json'){
+getCohortDefinitions <- function(modelList){
 
-  # save json
-  if(is.null(outputJsonLocation)){
-    outputJsonLocation <- PatientLevelPrediction:::createTempModelLoc()
-  }
-  if(!dir.exists(outputJsonLocation)){
-    dir.create(outputJsonLocation, recursive = T)
-  }
-  write(jsonForStudy, file=file.path(outputJsonLocation, jsonName))
+  targets <- unique(lapply(1:length(modelList), function(i) modelList[[i]]$cohort_json))
+  outcomes <- unique(lapply(1:length(modelList), function(i) modelList[[i]]$outcome_json))
 
-  specifications <- Hydra::loadSpecifications(file.path(outputJsonLocation, jsonName))
-
-  if(dir.exists(outputPackageLocation)){
-    shiny::showNotification("Location Exists - pick a different outputPackageLocation")
-  } else {
-    Hydra::hydrate(specifications = specifications, outputFolder = outputPackageLocation)
+  covariates <- list()
+  for(i in 1:length(modelList)){
+    for(j in 1:length(modelList[[i]]$model$coefficients)){
+      covariates[[length(covariates)+1]] <- modelList[[i]]$model$coefficients[[j]]$cohortjson
+    }
   }
+
+  cohortDefinitions <- unique(c(targets, outcomes, covariates))
+  return(cohortDefinitions)
 }
+
+createCovariateList <- function(x){
+
+  covSet <- list()
+  length(covSet) <- length(x$model$coefficients)
+  for(j in 1:length(x$model$coefficients)){
+    settings <- x$model$coefficients[[j]]
+    settings<- settings[!names(settings)%in%c('points','power','offset','cohortjson')]
+
+    covSet[[j]] <- list(fnct = 'createCohortCovariateSettings',
+                        settings = settings
+    )
+  }
+  return(covSet)
+}
+
+formatValidationModel <- function(model){
+
+  coef <- lapply(1:length(model$coefficients), function(i){unlist(model$coefficients[[i]][c('covariateId','covariateName', 'points', 'offset', 'power')])})
+  model$coefficients <- do.call('rbind', coef)
+
+  return(model)
+}
+
 
 
 # format strToVect

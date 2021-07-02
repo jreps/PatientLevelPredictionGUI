@@ -52,3 +52,29 @@ downloadServer <- #function(id) {
     )
 
   }
+
+
+# generic - calls Hydra for json specification
+createPackage <- function(jsonForStudy,
+                          outputPackageLocation = 'D:/testing/package',
+                          outputJsonLocation = NULL,
+                          jsonName = 'predictionAnalysisList.json'){
+
+  # save json
+  if(is.null(outputJsonLocation)){
+    outputJsonLocation <- PatientLevelPrediction:::createTempModelLoc()
+  }
+  if(!dir.exists(outputJsonLocation)){
+    dir.create(outputJsonLocation, recursive = T)
+  }
+  write(jsonForStudy, file=file.path(outputJsonLocation, jsonName))
+
+  specifications <- Hydra::loadSpecifications(file.path(outputJsonLocation, jsonName))
+
+  if(dir.exists(outputPackageLocation)){
+    shiny::showNotification("Location Exists - pick a different outputPackageLocation")
+  } else {
+    Hydra::hydrate(specifications = specifications, outputFolder = outputPackageLocation)
+  }
+}
+
