@@ -14,6 +14,7 @@ Suggests:
     httr,
     shiny,
     shinydashboard,
+    shinyDirectoryInput,
     shinyWidgets,
     pkgbuild,
     RJSONIO,

@@ -107,7 +107,8 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   callModule(downloadServer, 'downloadDev',
              jsonForStudy = jsonForStudy,
-             analysisList= analysisList)
+             analysisList= analysisList,
+             baseUrl = webApi)
 
   # =====
 
@@ -130,7 +131,8 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   callModule(downloadServer, 'downloadVal',
              jsonForStudy = jsonForValStudy,
-             analysisList= analysisValList)
+             analysisList = analysisValList,
+             baseUrl = webApi)
 
   # =====
 

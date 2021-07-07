@@ -1,5 +1,5 @@
-appdir <- file.path("/Users/jreps/Documents/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
-source(file.path(appdir,"helpers","HelperCheckPackageDep.R"))
+appDir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
+source(file.path(appDir,"helpers","HelperCheckPackageDep.R"))
 
 installViewer <- function(id, label = "Package") {
   ns <- shiny::NS(id)

@@ -16,37 +16,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-library(shiny)
-library(plotly)
-library(shinycssloaders)
-library(shinydashboard)
-library(shinyWidgets)
-library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory-input')
-library(httr)
+#library(shinyDirectoryInput) #devtools::install_github('wleepang/shiny-directory-input')
 
-##appdir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
-appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
+appDir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
+##appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
 
-source(file.path(appdir,"modules","webApiModule.R"))
-source(file.path(appdir,"modules","cohortExtractModule.R"))
+source(file.path(appDir,"modules","webApiModule.R"))
+source(file.path(appDir,"modules","cohortExtractModule.R"))
 
-source(file.path(appdir,"modules","installModule2.R"))
+source(file.path(appDir,"modules","installModule2.R"))
 
-source(file.path(appdir,"modules","cohortModule.R"))
-source(file.path(appdir,"modules","modelModule.R"))
-source(file.path(appdir,"modules","covariateModule.R"))
-source(file.path(appdir,"modules","populationModule.R"))
-source(file.path(appdir,"modules","analysisModule.R"))
-source(file.path(appdir,"modules","trainingModule.R"))
-source(file.path(appdir,"modules","restrictionsModule.R"))
-source(file.path(appdir,"modules","jsonModule.R"))
-source(file.path(appdir,"modules","downloadModule.R"))
+source(file.path(appDir,"modules","cohortModule.R"))
+source(file.path(appDir,"modules","modelModule.R"))
+source(file.path(appDir,"modules","covariateModule.R"))
+source(file.path(appDir,"modules","populationModule.R"))
+source(file.path(appDir,"modules","analysisModule.R"))
+source(file.path(appDir,"modules","trainingModule.R"))
+source(file.path(appDir,"modules","restrictionsModule.R"))
+source(file.path(appDir,"modules","jsonModule.R"))
+source(file.path(appDir,"modules","downloadModule.R"))
 
-source(file.path(appdir,"modules","executeModule.R"))
+source(file.path(appDir,"modules","executeModule.R"))
 
-
-
-source(file.path(appdir,"modules","existingModelModule.R"))
+source(file.path(appDir,"modules","existingModelModule.R"))
 
 actionButton <- shiny::actionButton
 

@@ -74,16 +74,12 @@ formatValidationSettings <- function(analysisList,
     modelList[[i]]$populationSettings <- modelList[[i]]$populationSettings
     modelList[[i]]$covariateSettings <- createCovariateList(modelList[[i]])
     modelList[[i]]$settings <- list()
-    if(length(modelList)==1){
-      modelList[[i]]$model <- list(formatValidationModel(modelList[[i]]$model))
-    }else{
-      modelList[[i]]$model <- formatValidationModel(modelList[[i]]$model)
-    }
+    modelList[[i]]$model <- list(formatValidationModel(modelList[[i]]$model))
   }
 
 
-  createValidationStudyJsonList <- list(skeletonVersion = 'v1.0.1',
-                                        skeletonType = "PatientLevelPredictionValidationStudy",
+  validationStudyJsonList <- list(skeletonVersion = 'v1.0.1',
+                                        skeletonType = "SkeletonPredictionValidationStudy",
                                         packageName = analysisList$packageName,
                                         packageDescription = analysisList$packageDescription,
                                         createdBy = analysisList$createBy,
@@ -92,12 +88,7 @@ formatValidationSettings <- function(analysisList,
                                         models = modelList,
                                         cohortDefinitions = cohortDefinitions)
 
-  #ParallelLogger::saveSettingsToJson(createValidationStudyJsonList,
-  #                                   file.path('/Users/jreps/Documents/', 'valJson.json'))
-
-  exportJson <- RJSONIO::toJSON(createValidationStudyJsonList, digits = 23)
-
-  return(exportJson)
+  return(validationStudyJsonList)
 }
 
 getCohortDefinitions <- function(modelList){
@@ -107,16 +98,23 @@ getCohortDefinitions <- function(modelList){
 
   covariates <- list()
   for(i in 1:length(modelList)){
-    for(j in 1:length(modelList[[i]]$model$coefficients)){
-      covariates[[length(covariates)+1]] <- modelList[[i]]$model$coefficients[[j]]$cohortjson
+    if(length(modelList[[i]]$model$coefficients)>0){
+      for(j in 1:length(modelList[[i]]$model$coefficients)){
+        covariates[[length(covariates)+1]] <- modelList[[i]]$model$coefficients[[j]]$cohortjson
+      }
     }
   }
 
   cohortDefinitions <- unique(c(targets, outcomes, covariates))
+
   return(cohortDefinitions)
 }
 
 createCovariateList <- function(x){
+
+  if(length(x$model$coefficients)==0){
+    return(NULL)
+  }
 
   covSet <- list()
   length(covSet) <- length(x$model$coefficients)
@@ -132,6 +130,10 @@ createCovariateList <- function(x){
 }
 
 formatValidationModel <- function(model){
+
+  if(length(model$coefficients)==0){
+    return(NULL)
+  }
 
   coef <- lapply(1:length(model$coefficients), function(i){unlist(model$coefficients[[i]][c('covariateId','covariateName', 'points', 'offset', 'power')])})
   model$coefficients <- do.call('rbind', coef)

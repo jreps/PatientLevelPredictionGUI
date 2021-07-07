@@ -1,3 +1,6 @@
+appDir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
+source(file.path(appDir,"helpers","codeToPopSkeletons.R"))
+
 downloadViewer <- function(id, label = "download") {
   ns <- shiny::NS(id)
 
@@ -16,16 +19,19 @@ downloadServer <- #function(id) {
   #moduleServer(
   #id,
   function(input, output, session,
-           jsonForStudy, analysisList) {
+           jsonForStudy, analysisList,
+           baseUrl) {
 
     shiny::observeEvent(input$hydrate, {
       if(jsonForStudy() != ''){
-        createPackage(jsonForStudy(),
-                      outputPackageLocation = file.path(readDirectoryInput(session, 'outputPackageLocation'), analysisList()$packageName),
-                      outputJsonLocation = NULL,
-                      jsonName = 'predictionAnalysisList.json')
+        createPackage(jsonForStudy = jsonForStudy(),
+                      outputPackageLocation = file.path(readDirectoryInput(session, 'outputPackageLocation')),
+                      packageName = analysisList()$packageName,
+                      skeletonType = jsonForStudy()$skeletonType,
+                      jsonName = 'predictionAnalysisList.json',
+                      baseUrl = baseUrl())
       } else{
-
+        shiny::showNotification("Create json settings first and retry")
       }
 
     })
@@ -56,25 +62,46 @@ downloadServer <- #function(id) {
 
 # generic - calls Hydra for json specification
 createPackage <- function(jsonForStudy,
-                          outputPackageLocation = 'D:/testing/package',
-                          outputJsonLocation = NULL,
-                          jsonName = 'predictionAnalysisList.json'){
+                          outputPackageLocation = 'D:/testing',
+                          packageName = 'testpackage',
+                          skeletonType = 'SkeletonPredictionStudy',
+                          jsonName = 'predictionAnalysisList.json',
+                          baseUrl ){
 
-  # save json
-  if(is.null(outputJsonLocation)){
-    outputJsonLocation <- PatientLevelPrediction:::createTempModelLoc()
-  }
-  if(!dir.exists(outputJsonLocation)){
-    dir.create(outputJsonLocation, recursive = T)
-  }
-  write(jsonForStudy, file=file.path(outputJsonLocation, jsonName))
-
-  specifications <- Hydra::loadSpecifications(file.path(outputJsonLocation, jsonName))
-
-  if(dir.exists(outputPackageLocation)){
-    shiny::showNotification("Location Exists - pick a different outputPackageLocation")
+  if(dir.exists(file.path(outputPackageLocation, packageName) )){
+    shiny::showNotification("Location Exists - pick a different outputPackageLocation or packageName")
   } else {
-    Hydra::hydrate(specifications = specifications, outputFolder = outputPackageLocation)
+    dir.create(file.path(outputPackageLocation, packageName), recursive = T)
+    #Hydra::hydrate(specifications = specifications, outputFolder = outputPackageLocation)
+    createPackage <- tryCatch({downLoadSkeleton(outputFolder = outputPackageLocation,
+                                                packageName = packageName,
+                                                skeletonType = skeletonType)#'SkeletonPredictionValidationStudy')
+    }, error = function(e){shiny::showNotification(e); return(NULL)})
+
+    if(!is.null(createPackage)){
+      createPackage <- tryCatch({replaceName(packageLocation = file.path(outputPackageLocation,  packageName),
+                                             packageName = packageName,
+                                             skeletonType = skeletonType)},
+                                error = function(e){shiny::showNotification(e); return(NULL)})
+      if(!is.null(createPackage)){
+        createPackage <- tryCatch({saveAnalysisJson(packageLocation = file.path(outputPackageLocation,  packageName),
+                                                    analysisList = jsonForStudy)},
+                                  error = function(e){shiny::showNotification(e); return(NULL)})
+
+        if(!is.null(createPackage)){
+          createPackage <- tryCatch({saveCohorts(packageLocation = file.path(outputPackageLocation,  packageName),
+                                                 analysisList = jsonForStudy,
+                                                 baseUrl = baseUrl)},
+                                    error = function(e){shiny::showNotification(e); return(NULL)})
+
+          if(!is.null(createPackage)){
+            shiny::showNotification("Skeleton package created")
+          } else{
+            shiny::showNotification("Saving cohort issue")
+          }
+
+        }}}
+
   }
 }
 

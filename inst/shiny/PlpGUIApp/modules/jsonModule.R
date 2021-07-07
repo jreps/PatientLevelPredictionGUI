@@ -1,7 +1,7 @@
-appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
-source(file.path(appdir,"helpers","HelperCheckInputs.R"))
-source(file.path(appdir,"helpers","HelperFormatInput.R"))
-source(file.path(appdir,"helpers","createDevelopmentStudyJson.R"))
+appDir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
+source(file.path(appDir,"helpers","HelperCheckInputs.R"))
+source(file.path(appDir,"helpers","HelperFormatInput.R"))
+source(file.path(appDir,"helpers","createDevelopmentStudyJson.R"))
 
 jsonViewer <- function(id, label = "Json") {
   ns <- shiny::NS(id)
@@ -80,7 +80,7 @@ jsonServer <- #function(id) {
         json <- createJson(type, createStudyJsonList(), webApi() )
         jsonForStudy(json)
         output$jsonCode <- shiny::renderUI({shiny::HTML(gsub('\n','', gsub("/n", "<br/>",
-                                                                           jsonForStudy()
+                                                                           RJSONIO::toJSON(jsonForStudy(), digits = 23)
         ))
         )
         })
@@ -101,14 +101,12 @@ jsonServer <- #function(id) {
 
 createJson <- function(type,createStudyJsonList, webApi){
 
-
   # this write
   if(type == 'development'){
     createStudyJsonList$webApi <- webApi
     jsonForStudy <- do.call('createDevelopmentStudyJson', createStudyJsonList)
   }
   if(type == 'validation'){
-    #jsonForStudy <- do.call('createValidationStudyJson', createStudyJsonList)
     jsonForStudy <- createStudyJsonList
   }
 

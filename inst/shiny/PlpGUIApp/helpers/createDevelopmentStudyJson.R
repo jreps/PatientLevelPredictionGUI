@@ -17,7 +17,7 @@ createDevelopmentStudyJson <- function(packageName = 'exampleStudy',
 
   json <- list()
 
-  json$skeletonType <-  "PatientLevelPredictionStudy"
+  json$skeletonType <-  "SkeletonPredictionStudy"
   json$skeletonVersion <- "v0.0.6"  #update?
   json$packageName <- packageName
   json$description <- packageDescription
@@ -59,9 +59,9 @@ createDevelopmentStudyJson <- function(packageName = 'exampleStudy',
   #ParallelLogger::saveSettingsToJson(json,
   #                                   file.path(outputLocation, jsonName))
 
-  exportJson <- RJSONIO::toJSON(json, digits = 23)
+  #exportJson <- RJSONIO::toJSON(json, digits = 23)
 
-  return(exportJson)
+  return(json)
 }
 
 
@@ -160,8 +160,8 @@ getCohorts <- function(cohortsToCreate, baseUrl){
     writeLines(paste("Extracting cohort:", cohortsToCreate$name[i]))
     cohortDefinitions[[i]] <- ROhdsiWebApi::getCohortDefinition(cohortId = as.double(cohortsToCreate$atlasId[i]),
                                                                 baseUrl = baseUrl)
-    cohortDefinitions[[i]]$expressionSql <- RJSONIO::toJSON(cohortDefinitions[[i]]$expression)
-    cohortDefinitions[[i]]$name = cohortsToCreate$name[i]
+    #cohortDefinitions[[i]]$expressionSql <- RJSONIO::toJSON(cohortDefinitions[[i]]$expression)
+    #cohortDefinitions[[i]]$name = cohortsToCreate$name[i]
   }
 
   return(cohortDefinitions)

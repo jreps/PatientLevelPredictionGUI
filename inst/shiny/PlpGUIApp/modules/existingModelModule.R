@@ -220,7 +220,7 @@ existingModelServer <- #function(id) {
       newCoeff <- list(covariateId = as.double(as.character(input$atlasId))*1000+input$analysisId,
                        covariateName = input$covariateName,
                        cohortId = input$atlasId,
-                       cohortjson = as.character(getCohort(as.double(as.character(input$atlasId)), webApi())),
+                       cohortjson = getCohort(as.double(as.character(input$atlasId)), webApi()),
                    points = input$cohortPoints,
                    offset = input$cohortOffset,
                    power = input$cohortPower,
