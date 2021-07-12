@@ -21,15 +21,13 @@
 appDir <- system.file("shiny", "PlpGUIApp", package = "PatientLevelPredictionGUI")
 ##appdir <- file.path("/Users/jreps/Documents/github/PatientLevelPredictionGUI/inst","shiny", "PlpGUIApp")
 
-source(file.path(appDir,"modules","webApiModule.R"))
-source(file.path(appDir,"modules","cohortExtractModule.R"))
 
-source(file.path(appDir,"modules","installModule2.R"))
+#source(file.path(appDir,"modules","installModule2.R"))
 
-source(file.path(appDir,"modules","cohortModule.R"))
-source(file.path(appDir,"modules","modelModule.R"))
-source(file.path(appDir,"modules","covariateModule.R"))
-source(file.path(appDir,"modules","populationModule.R"))
+#source(file.path(appDir,"modules","cohortModule.R"))
+#source(file.path(appDir,"modules","modelModule.R"))
+#source(file.path(appDir,"modules","covariateModule.R"))
+#source(file.path(appDir,"modules","populationModule.R"))
 source(file.path(appDir,"modules","analysisModule.R"))
 source(file.path(appDir,"modules","trainingModule.R"))
 source(file.path(appDir,"modules","restrictionsModule.R"))
@@ -66,7 +64,7 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
 
                                     shinydashboard::dashboardSidebar(
                                       shinydashboard::sidebarMenu(id ='menu',
-                                                                  addInfo(shinydashboard::menuItem("Install", tabName = "Install", icon = shiny::icon("wrench")), "InstallInfo"),
+                                                                  #addInfo(shinydashboard::menuItem("Install", tabName = "Install", icon = shiny::icon("wrench")), "InstallInfo"),
                                                                   addInfo(shinydashboard::menuItem("Design", tabName = "Design", icon = shiny::icon("pencil-ruler")), "DesignInfo"),
                                                                   addInfo(shinydashboard::menuItem("Execute", tabName = "Execute", icon = shiny::icon("running")), "ExecuteInfo"),
                                                                   addInfo(shinydashboard::menuItem("View", tabName = "View", icon = shiny::icon("eye")), "ViewInfo"),
@@ -81,8 +79,8 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                                                           choices = c('Development','Validation'),
                                                                           selected = 'Development'),
 
-                                                       webApiViewer("webApiMain"),
-                                                       extractCohortsViewer("cohortExtract")
+                                                       OhdsiShinyModules::webApiViewer("webApiMain"),
+                                                       OhdsiShinyModules::extractCohortsViewer("cohortExtract")
 
 
 
@@ -97,14 +95,12 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                       shinydashboard::tabItems(
 
                                         # help tab
-                                        shinydashboard::tabItem(tabName = "Install",
-                                                                installViewer("installPatientLevelPrediction", "PatientLevelPrediction"),
-                                                                installViewer("installHydra", "Hydra"),
-                                                                installViewer("installSkeletonPredictionStudy", "SkeletonPredictionStudy"),
-                                                                installViewer("installSkeletonPredictionValidationStudy", "SkeletonPredictionValidationStudy")
-
-
-                                        ),
+                                        #shinydashboard::tabItem(tabName = "Install",
+                                        #                        OhdsiShinyModules::installViewer("installPatientLevelPrediction", "PatientLevelPrediction"),
+                                        #                        OhdsiShinyModules::installViewer("installHydra", "Hydra"),
+                                        #                        OhdsiShinyModules::installViewer("installSkeletonPredictionStudy", "SkeletonPredictionStudy"),
+                                        #                        OhdsiShinyModules::installViewer("installSkeletonPredictionValidationStudy", "SkeletonPredictionValidationStudy")
+                                        #),
 
                                         # help tab
                                         shinydashboard::tabItem(tabName = "Help",
@@ -120,21 +116,21 @@ ui <- shinydashboard::dashboardPage(skin = 'black',
                                                                 conditionalPanel(condition = "input.designType=='Development'",
 
 
-                                                                                 tabsetPanel(type = "tabs",
+                                                                                 tabsetPanel(type = "tabs", id = 'designTabs',
 
                                                                                              tabPanel("Settings",
 
 
                                                                                                       analysisViewer("analysisDev", "Analysis Settings"),
 
-                                                                                                      cohortViewer("targetDev", "Target"),
-                                                                                                      cohortViewer("outcomeDev", "Outcome"),
+                                                                                                      OhdsiShinyModules::cohortViewer("targetDev", "Target"),
+                                                                                                      OhdsiShinyModules::cohortViewer("outcomeDev", "Outcome"),
 
-                                                                                                      modelViewer("modelDev", "Model Settings"),
+                                                                                                      OhdsiShinyModules::modelViewer("modelDev", "Model Settings"),
 
-                                                                                                      covariateViewer("covariateDev", "Covariate Settings"),
+                                                                                                      OhdsiShinyModules::covariateViewer("covariateDev", "Covariate Settings"),
 
-                                                                                                      populationViewer("populationDev", "Population Settings"),
+                                                                                                      OhdsiShinyModules::populationViewer("populationDev", "Population Settings"),
 
                                                                                                       restrictionViewer("restrictionPODev", "Population/Outcome"),
                                                                                                       restrictionViewer("restrictionMCDev", "Model/Covariate"),

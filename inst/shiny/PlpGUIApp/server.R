@@ -8,21 +8,21 @@ server <- shiny::shinyServer(function(input, output, session) {
 
   # ===== WEBAPI
 
-  webApi <- callModule(webApiServer, 'webApiMain')
-  cohortReactive <- callModule(extractCohortsServer, 'cohortExtract',
+  webApi <- callModule(OhdsiShinyModules::webApiServer, 'webApiMain')
+  cohortReactive <- callModule(OhdsiShinyModules::extractCohortsServer, 'cohortExtract',
                                webApi = webApi)
 
   # ===== END WEBAPI
 
   # ===== INSTALLER
-  callModule(installServer, 'installPatientLevelPrediction',
-             package = 'PatientLevelPrediction')
-  callModule(installServer, 'installHydra',
-             package = 'Hydra')
-  callModule(installServer, 'installSkeletonPredictionStudy',
-             package = 'SkeletonPredictionStudy')
-  callModule(installServer, 'installSkeletonPredictionValidationStudy',
-             package = 'SkeletonPredictionValidationStudy')
+  #callModule(OhdsiShinyModules::installServer, 'installPatientLevelPrediction',
+  #           package = 'PatientLevelPrediction')
+  #callModule(OhdsiShinyModules::installServer, 'installHydra',
+  #           package = 'Hydra')
+  #callModule(OhdsiShinyModules::installServer, 'installSkeletonPredictionStudy',
+  #           package = 'SkeletonPredictionStudy')
+  #callModule(OhdsiShinyModules::installServer, 'installSkeletonPredictionValidationStudy',
+  #           package = 'SkeletonPredictionValidationStudy')
 
   # ===== END INSTALLER
 
@@ -32,17 +32,18 @@ server <- shiny::shinyServer(function(input, output, session) {
   analysisList <- callModule(analysisServer, 'analysisDev')
 
   # Cohorts
-  targetList <- callModule(cohortServer, 'targetDev', cohortReactive)
-  outcomeList <- callModule(cohortServer, 'outcomeDev', cohortReactive)
+  targetList <- callModule(OhdsiShinyModules::cohortServer, 'targetDev', cohortReactive)
+  outcomeList <- callModule(OhdsiShinyModules::cohortServer, 'outcomeDev', cohortReactive)
 
   # Models
-  modelList <- callModule(modelServer, 'modelDev')
+  modelList <- callModule(OhdsiShinyModules::modelServer, 'modelDev')
 
   # Covariates
-  covList <- callModule(covariateServer, 'covariateDev', cohortReactive)
+  covList <- callModule(OhdsiShinyModules::covariateServer, 'covariateDev',
+                        cohortReactive, validation = F)
 
   # Population
-  popList <- callModule(populationServer, 'populationDev')
+  popList <- callModule(OhdsiShinyModules::populationServer, 'populationDev')
 
   # Restrict Analysis
   options1NamesOP <- shiny::reactiveVal(NULL)

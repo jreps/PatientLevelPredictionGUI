@@ -65,6 +65,7 @@ createDevelopmentStudyJson <- function(packageName = 'exampleStudy',
 }
 
 
+# REMOVE
 addAttr <- function(covariateSettings){
   #find standard
   if(!is.null(covariateSettings$fnct)){

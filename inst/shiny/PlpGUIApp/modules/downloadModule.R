@@ -25,7 +25,7 @@ downloadServer <- #function(id) {
     shiny::observeEvent(input$hydrate, {
       if(jsonForStudy() != ''){
         createPackage(jsonForStudy = jsonForStudy(),
-                      outputPackageLocation = file.path(readDirectoryInput(session, 'outputPackageLocation')),
+                      outputPackageLocation = file.path(shinyDirectoryInput::readDirectoryInput(session, 'outputPackageLocation')),
                       packageName = analysisList()$packageName,
                       skeletonType = jsonForStudy()$skeletonType,
                       jsonName = 'predictionAnalysisList.json',
@@ -49,10 +49,10 @@ downloadServer <- #function(id) {
           # condition prevents handler execution on initial app launch
 
           # launch the directory selection dialog with initial path read from the widget
-          path = choose.dir(default = readDirectoryInput(session, 'outputPackageLocation'))
+          path = shinyDirectoryInput::choose.dir(default = shinyDirectoryInput::readDirectoryInput(session, 'outputPackageLocation'))
 
           # update the widget value
-          updateDirectoryInput(session, 'outputPackageLocation', value = path)
+          shinyDirectoryInput::updateDirectoryInput(session, 'outputPackageLocation', value = path)
         }
       }
     )

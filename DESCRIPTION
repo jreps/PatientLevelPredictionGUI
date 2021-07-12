@@ -11,13 +11,14 @@ LazyData: true
 Depends:
     R (>= 3.3.0)
 Suggests:
+    curl,
     httr,
-    shiny,
-    shinydashboard,
-    shinyDirectoryInput,
-    shinyWidgets,
+    OhdsiShinyModules,
+    ParallelLogger,
     pkgbuild,
     RJSONIO,
     ROhdsiWebApi,
-    ParallelLogger,
-    curl
+    shiny,
+    shinydashboard,
+    shinyDirectoryInput,
+    shinyWidgets

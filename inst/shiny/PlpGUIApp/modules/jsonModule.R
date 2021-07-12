@@ -92,6 +92,7 @@ jsonServer <- #function(id) {
           shiny::showNotification('Incorrect settings for JSON', duration = 5, type = 'error')
         }
       }
+
     })
 
     return(jsonForStudy)
