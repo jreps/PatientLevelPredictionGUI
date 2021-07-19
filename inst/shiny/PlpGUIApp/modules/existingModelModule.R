@@ -23,7 +23,6 @@ existingModelServer <- #function(id) {
     selectedRow <- shiny::reactiveVal()  # ind of model
     predictorRow <- shiny::reactiveVal()  # ind of predictor
 
-
     # MODEL STUFF
 
     output$modelTable <- shiny::renderDataTable({
@@ -46,6 +45,18 @@ existingModelServer <- #function(id) {
     # this adds a new model
     #@@@@@@@@@@@@@@@@@@@@
     shiny::observeEvent(input$addModel, {
+
+      runModule <- T
+      if(webApi() == ""){
+        runModule <- F
+        shiny::showNotification(ui = 'webApi not set - first you need to connect to webApi using the left hand menu', closeButton = T)
+      }
+      if(nrow(cohortReactive()) == 0){
+        runModule <- F
+        shiny::showNotification(ui = 'cohort not set - first you need to connect to webApi and then load cohorts using the left hand menu', closeButton = T)
+      }
+
+      if(runModule){
       # add to modelList
       # add a new model to the list
       oldList <- modelList()
@@ -74,6 +85,7 @@ existingModelServer <- #function(id) {
       shiny::showModal(viewModelModal(ns = session$ns, model =
                                         modelList()[[selectedRow()]],
                                       cohorts = cohortReactive))
+      }
     })
 
 
@@ -307,7 +319,6 @@ existingModelServer <- #function(id) {
                                       model = modelList()[[selectedRow()]],
                                       cohorts = cohortReactive))
     })
-
 
     return(modelList)
   }
